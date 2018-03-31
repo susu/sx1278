@@ -23,9 +23,9 @@ fn main() {
     pin.set_direction(Direction::Out).unwrap();
     pin.set_value(1).unwrap();
 
-    let mut sx1278 = SX1278::new(spi, pin);
-
-
+    let mut sx1278 = SX1278::new_lora(spi, pin).expect("SX1278 init error");
     println!("Version: 0x{:x}", sx1278.version().unwrap());
+
+    // sx1278.
 
 }
