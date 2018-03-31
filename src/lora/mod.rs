@@ -79,7 +79,7 @@ where
 
     // bus
     fn read(&mut self, reg: Register) -> Result<u8, E> {
-        let mut buffer = [0x80 | reg.addr(), 0];
+        let mut buffer = [0x00 | reg.addr(), 0];
         self.nss.set_low();
         let buffer = self.spi.transfer(&mut buffer)?;
         self.nss.set_high();
@@ -87,7 +87,7 @@ where
     }
 
     fn write(&mut self, reg: Register, value: u8) -> Result<(), E> {
-        let mut buffer = [0x00 | reg.addr(), value];
+        let mut buffer = [0x80 | reg.addr(), value];
         self.nss.set_low();
         self.spi.transfer(&mut buffer)?;
         self.nss.set_high();
