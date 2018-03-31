@@ -1,0 +1,16 @@
+
+
+pub const MODE_MASK: u8 = 0b0000_0111;
+
+// Radio CONFIG1
+pub const ERROR_CODING_MASK: u8 = 0b0000_1110;
+pub const BANDWIDTH_MASK: u8 = 0b1111_0000;
+pub const IMPLICIT_HEADER_MASK: u8 = 0b0000_0001;
+
+// Radio CONFIG2
+pub const SPREADING_FACTOR_MASK: u8 = 0b1111_0000;
+pub const CRC_MASK: u8 = 0b0000_0100;
+
+// Radio CONFIG3
+pub const LOW_DATARATE_OPTIMIZE_MASK: u8 = 0b0000_1000;
+pub const AUTO_GAIN_CTRL_MASK: u8 = 0b0000_0100;
