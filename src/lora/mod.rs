@@ -1,18 +1,37 @@
 
+mod register;
+mod mode;
+mod radio_settings;
+
+pub use self::mode::Mode;
+pub use self::radio_settings::{RadioSettings, SpreadingFactor, Bandwidth, ErrorCoding};
+
+
 use core::marker::PhantomData;
 
 use hal::blocking::spi;
 use hal::digital::OutputPin;
 
-mod register;
-mod mode;
-mod register_masks;
-
 use self::register::Register;
-pub use self::mode::Mode;
-use self::register_masks::*;
 use ::SX1278;
 use ::LoRa;
+
+
+#[derive(Debug)]
+pub enum Error<E> {
+    /// Late collision
+    TooLargeSymbolTimeout,
+    /// SPI error
+    Spi(E),
+}
+
+
+impl<E> From<E> for Error<E> {
+    fn from(e: E) -> Self {
+        Error::Spi(e)
+    }
+}
+
 
 impl<E, SPI, NSS> SX1278<SPI, NSS, LoRa>
 where
@@ -77,6 +96,40 @@ where
         self.write(Register::FreqLsb, lsb as u8)
     }
 
+    pub fn set_payload_length(&mut self, length: u8) -> Result<(), E> {
+        self.write(Register::PayloadLength, length)
+    }
+
+    /// Sets [`RadioSettings`]
+    ///
+    /// Note: it also clears the TXCONTINUOUS flag (it is used only for spectral testing).
+    /// See [`RadioSettings`]
+    pub fn set_radio_settings(&mut self, settings: &RadioSettings) -> Result<(), Error<E>> {
+        if settings.symbol_timeout >= 1024 {
+            return Err(Error::TooLargeSymbolTimeout);
+        }
+
+        let config1 = (settings.bandwidth as u8) << 4 |
+            (settings.error_coding as u8) << 1 |
+            (settings.implicit_header as u8);
+
+        self.write(Register::ModemConfig1, config1)?;
+
+        let config2 = (settings.spreading_factor as u8) << 4 |
+            (settings.crc as u8) << 2 |
+            (settings.symbol_timeout >> 8) as u8;
+        self.write(Register::ModemConfig2, config2)?;
+        self.write(Register::SymbTimeoutLsb, (settings.symbol_timeout & 0xff) as u8)?;
+
+        self.set_payload_length(settings.payload_length)?;
+        self.set_f_rf(settings.f_rf)?;
+
+        let mut config3 = self.read(Register::ModemConfig3)?;
+        config3 = config3 & !0b0000_1000 | (settings.low_datarate_optimize as u8) << 3;
+        self.write(Register::ModemConfig3, config3)?;
+        Ok(())
+    }
+
     // bus
     fn read(&mut self, reg: Register) -> Result<u8, E> {
         let mut buffer = [0x00 | reg.addr(), 0];
@@ -94,3 +147,5 @@ where
         Ok(())
     }
 }
+
+const MODE_MASK: u8 = 0b0000_0111;
