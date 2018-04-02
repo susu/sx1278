@@ -1,23 +1,26 @@
 
-static mut MOCK_DEVICE: MockDevice = MockDevice {
-    registry: [0; 128],
-    fifo: [0; 256],
-};
-
-pub fn get_mock_device() -> &'static mut MockDevice {
-    unsafe { &mut MOCK_DEVICE }
-}
-
-
 pub struct MockDevice {
     pub registry: [u8; 128],
     pub fifo: [u8; 256],
 }
 
 impl MockDevice {
+    pub fn new() -> MockDevice {
+        let mut device = MockDevice {
+            registry: [0; 128],
+            fifo: [0; 256],
+        };
+        device.reset();
+        device
+    }
+
     pub fn reset(&mut self) {
         self.fifo = [0; 256];
         self.set_default_registry_values();
+    }
+
+    pub fn registry_value(&self, addr: u8) -> u8 {
+        self.registry[addr as usize]
     }
 
     fn set_default_registry_values(&mut self) {
