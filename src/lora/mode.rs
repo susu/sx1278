@@ -1,5 +1,5 @@
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Mode {
     Sleep = 0x00,
     Standby = 0x01,

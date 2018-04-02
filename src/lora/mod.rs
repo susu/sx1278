@@ -9,7 +9,7 @@ mod mode;
 mod register_masks;
 
 use self::register::Register;
-use self::mode::Mode;
+pub use self::mode::Mode;
 use self::register_masks::*;
 use ::SX1278;
 use ::LoRa;
@@ -53,9 +53,9 @@ where
         self.read(Register::OpMode).map(|opmode| Mode::from_opmode(opmode))
     }
 
-    pub fn set_mode(&mut self, new_mode: &Mode) -> Result<(), E> {
+    pub fn set_mode(&mut self, new_mode: Mode) -> Result<(), E> {
         let mut opmode = self.read(Register::OpMode)?;
-        opmode = (opmode & !MODE_MASK) | (*new_mode as u8);
+        opmode = (opmode & !MODE_MASK) | (new_mode as u8);
         self.write(Register::OpMode, opmode)
     }
 

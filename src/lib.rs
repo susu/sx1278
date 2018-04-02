@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 pub enum LoRa {}
 pub enum FskOok {}
 
-mod lora;
+pub mod lora;
 
 /// Represents an SX1278 device
 ///
