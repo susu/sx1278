@@ -81,7 +81,7 @@ mod set_radio_settings {
 
     #[test]
     fn it_should_return_error_for_too_large_symbol_timeout() {
-        let (mut sx, device) = create_sx1278();
+        let (mut sx, _) = create_sx1278();
         let settings = RadioSettings {
             f_rf: 0x42ee55,
             bandwidth: Bandwidth::_31_25kHz,
