@@ -47,8 +47,68 @@ pub struct RadioSettings {
     // TODO: AutoAgc, TxCont
 }
 
+#[derive(Debug, PartialEq)]
+pub enum PaError {
+    PaBoostRequired,
+    PowerOutOfRange,
+    InvalidPaDacConfig,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PaOutput {
+    Rfo,
+    PaBoost,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PaDac {
+    HighPower,
+    NormalPower,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct PaSettings {
-    pub pa_boost: bool,
-    pub pa_dac_highpower: bool,
+    pub output: PaOutput,
+    pub pa_dac: PaDac,
     pub power: i8,
+}
+
+impl PaSettings {
+
+    /// Returns the valid config where output is set to PA_BOOST
+    ///
+    /// Note: power must be: 14 < power <= 20
+    /// If your circuit will run from battery, highly recommended to set OCP!
+    ///
+    /// Note: Ra-01 and Ra-02 (FIXME) must use this method (they are hardwired to PA_BOOST output)
+    ///
+    /// The implementation follows the logic of the reference driver from Semtech.
+    pub fn with_pa_boost(power: i8) -> Result<PaSettings, PaError> {
+        if power <= 14 || power > 20{
+            Err(PaError::PowerOutOfRange)
+        } else {
+            let pa_dac = if power > 17 {
+                PaDac::HighPower
+            } else {
+                PaDac::NormalPower
+            };
+
+            Ok(PaSettings {
+                output: PaOutput::PaBoost,
+                pa_dac: pa_dac,
+                power,
+            })
+        }
+        // if power > 17 => enable padac highpower
+    }
+
+    /// Returns the valid config where output is set to PA_BOOST
+    ///
+    /// Note: power must be: -1 <= power <= 14
+    ///
+    /// The implementation follows the logic of the reference driver from Semtech.
+    pub fn with_rfo_output(power: i8) -> Result<PaSettings, PaError> {
+        // if power > 17 => enable padac highpower
+        unimplemented!();
+    }
 }

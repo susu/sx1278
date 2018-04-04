@@ -4,7 +4,8 @@ mod mode;
 mod radio_settings;
 
 pub use self::mode::Mode;
-pub use self::radio_settings::{RadioSettings, SpreadingFactor, Bandwidth, ErrorCoding};
+pub use self::radio_settings::{RadioSettings, SpreadingFactor, Bandwidth,
+                               ErrorCoding, PaSettings, PaError, PaOutput, PaDac};
 
 
 use core::marker::PhantomData;
