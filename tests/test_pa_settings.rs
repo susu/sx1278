@@ -31,4 +31,23 @@ mod create_pa_settings {
             assert_eq!(settings.pa_dac, PaDac::NormalPower);
         }
     }
+
+    mod with_rfo {
+        use sx1278::lora::{PaSettings, PaError, PaOutput, PaDac};
+
+        #[test]
+        fn power_boundary_tests() {
+            assert_eq!(PaSettings::with_rfo_output(-2), Err(PaError::PowerOutOfRange));
+            assert!(PaSettings::with_rfo_output(-1).is_ok());
+            assert!(PaSettings::with_rfo_output(14).is_ok());
+            assert_eq!(PaSettings::with_rfo_output(15), Err(PaError::PowerOutOfRange));
+        }
+
+        #[test]
+        fn should_enable_rfo_output_and_disable_highpower_padac() {
+            let settings = PaSettings::with_rfo_output(-1).unwrap();
+            assert_eq!(settings.output, PaOutput::Rfo);
+            assert_eq!(settings.pa_dac, PaDac::NormalPower);
+        }
+    }
 }

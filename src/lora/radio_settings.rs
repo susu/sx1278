@@ -107,7 +107,14 @@ impl PaSettings {
     ///
     /// The implementation follows the logic of the reference driver from Semtech.
     pub fn with_rfo_output(power: i8) -> Result<PaSettings, PaError> {
-        // if power > 17 => enable padac highpower
-        unimplemented!();
+        if power < -1 || power > 14 {
+            Err(PaError::PowerOutOfRange)
+        } else {
+            Ok(PaSettings {
+                output: PaOutput::Rfo,
+                pa_dac: PaDac::NormalPower,
+                power
+            })
+        }
     }
 }
