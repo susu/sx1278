@@ -84,7 +84,7 @@ impl PaSettings {
     ///
     /// The implementation follows the logic of the reference driver from Semtech.
     pub fn with_pa_boost(power: i8) -> Result<PaSettings, PaError> {
-        if power <= 14 || power > 20{
+        if power <= 14 || power > 20 {
             Err(PaError::PowerOutOfRange)
         } else {
             let pa_dac = if power > 17 {
@@ -99,10 +99,9 @@ impl PaSettings {
                 power,
             })
         }
-        // if power > 17 => enable padac highpower
     }
 
-    /// Returns the valid config where output is set to PA_BOOST
+    /// Returns the valid config where output is set to RFO
     ///
     /// Note: power must be: -1 <= power <= 14
     ///
