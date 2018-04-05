@@ -131,6 +131,23 @@ where
         Ok(())
     }
 
+    /// Sets [`PaSettings`]
+    ///
+    /// Note: always use PaSettings created from its constructors, do not construct directly!
+    /// Note: Ra-01 must use PA_BOOST!
+    /// See [`PaSettings`]
+    pub fn set_pa_settings(&mut self, settings: &PaSettings) -> Result<(), E> {
+        const MAXPOWER: u8 = 0b0_111_0000;
+        let pa_config = settings.output.as_registry_value() |
+            MAXPOWER | settings.power_registry_value();
+        self.write(Register::PaConfig, pa_config)?;
+
+        let pa_dac = (0x10 << 3) | settings.pa_dac.as_registry_value();
+        self.write(Register::PaDac, pa_dac)?;
+
+        Ok(())
+    }
+
     // bus
     fn read(&mut self, reg: Register) -> Result<u8, E> {
         let mut buffer = [0x00 | reg.addr(), 0];

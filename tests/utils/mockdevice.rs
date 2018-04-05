@@ -76,6 +76,9 @@ impl MockDevice {
 
         // version
         self.registry[0x42] = 0x12;
+
+        // PaDac
+        self.registry[0x4d] = (0x10 << 3) | 0x04
     }
 }
 

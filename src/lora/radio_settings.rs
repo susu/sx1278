@@ -60,10 +60,28 @@ pub enum PaOutput {
     PaBoost,
 }
 
+impl PaOutput {
+    pub(crate) fn as_registry_value(&self) -> u8 {
+        match self {
+            &PaOutput::PaBoost => 0b1000_0000,
+            &PaOutput::Rfo     => 0x00,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum PaDac {
     HighPower,
     NormalPower,
+}
+
+impl PaDac {
+    pub(crate) fn as_registry_value(&self) -> u8 {
+        match self {
+            &PaDac::NormalPower => 0b00000_100,
+            &PaDac::HighPower   => 0b00000_111,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -71,6 +89,15 @@ pub struct PaSettings {
     pub output: PaOutput,
     pub pa_dac: PaDac,
     pub power: i8,
+}
+
+impl PaSettings {
+    pub(crate) fn power_registry_value(&self) -> u8 {
+        match self.output {
+            PaOutput::PaBoost => (self.power - 5) as u8,
+            PaOutput::Rfo     => (self.power + 1) as u8,
+        }
+    }
 }
 
 impl PaSettings {
