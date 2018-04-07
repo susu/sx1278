@@ -1,7 +1,20 @@
 
+#[derive(Debug)]
+enum CurrentOp {
+    FifoRead(usize),
+    FifoWrite(usize),
+
+    BurstRead(usize),
+    BurstWrite(usize),
+    // Single byte is a special case of the above.
+}
+
 pub struct MockDevice {
     pub registry: [u8; 128],
     pub fifo: [u8; 256],
+    pub chip_selected: bool,
+    current_op: Option<CurrentOp>,
+    next_byte_to_read: u8,
 }
 
 impl MockDevice {
@@ -9,6 +22,9 @@ impl MockDevice {
         let mut device = MockDevice {
             registry: [0; 128],
             fifo: [0; 256],
+            chip_selected: false,
+            current_op: None,
+            next_byte_to_read: 0,
         };
         device.reset();
         device
@@ -17,10 +33,83 @@ impl MockDevice {
     pub fn reset(&mut self) {
         self.fifo = [0; 256];
         self.set_default_registry_values();
+        self.chip_selected = false;
+        self.current_op = None;
+        self.next_byte_to_read = 0;
     }
 
     pub fn registry_value(&self, addr: u8) -> u8 {
         self.registry[addr as usize]
+    }
+
+    pub fn process_byte(&mut self, byte: u8) -> u8 {
+        assert!(self.chip_selected, "Got data without chip-select! {:x}", byte);
+        print!("{:02x} ", byte);
+        let ret_byte = self.next_byte_to_read;
+
+        self.next_byte_to_read = match self.current_op {
+            None => {
+                let (op, next_byte) = self.new_op(byte);
+                self.current_op = Some(op);
+                next_byte
+            },
+            Some(CurrentOp::FifoRead(last_fifo_addr)) => {
+                self.registry[0x0d] += 1; // TODO check if the chip really increments this ptr
+                self.current_op = Some(CurrentOp::FifoRead(last_fifo_addr + 1));
+                self.fifo[last_fifo_addr + 1]
+            },
+            Some(CurrentOp::FifoWrite(fifo_addr)) => {
+                self.current_op = Some(CurrentOp::FifoWrite(fifo_addr + 1));
+                self.fifo[fifo_addr] = byte;
+                0u8
+            },
+            Some(CurrentOp::BurstRead(last_addr)) => {
+                self.current_op = Some(CurrentOp::BurstRead(last_addr + 1));
+                self.registry[last_addr + 1]
+            },
+            Some(CurrentOp::BurstWrite(addr)) => {
+                self.current_op = Some(CurrentOp::BurstWrite(addr + 1));
+                self.registry[addr] = byte;
+                0u8
+            },
+        };
+
+        ret_byte
+    }
+
+    fn new_op(&self, byte: u8) -> (CurrentOp, u8) {
+        match Op::from(byte) {
+            Op::Write(addr) if addr == 0x00 => {
+                print!("FifoWrite");
+                (CurrentOp::FifoWrite(self.registry_value(0x0d) as usize), 0)
+            },
+            Op::Read(addr) if addr == 0x00 => {
+                let fifo_ptr = self.registry_value(0x0d) as usize;
+                print!("FifoRead({:02x})", fifo_ptr);
+                (CurrentOp::FifoRead(fifo_ptr), self.fifo[fifo_ptr])
+            },
+            Op::Write(addr) => {
+                print!("W({:02x}) ", addr);
+                (CurrentOp::BurstWrite(addr), 0)
+            },
+            Op::Read(addr) => {
+                print!("R({:02x}) ", addr);
+                (CurrentOp::BurstRead(addr), self.registry[addr])
+            },
+        }
+    }
+
+    pub fn select_chip(&mut self) {
+        assert!(!self.chip_selected, "Double chip-select!");
+        self.chip_selected = true;
+        println!("<< select <<");
+    }
+
+    pub fn deselect_chip(&mut self) {
+        assert!(self.chip_selected, "Double chip-de-select!");
+        self.chip_selected = false;
+        self.current_op = None;
+        println!(">> deselect >>");
     }
 
     fn set_default_registry_values(&mut self) {
@@ -79,6 +168,22 @@ impl MockDevice {
 
         // PaDac
         self.registry[0x4d] = (0x10 << 3) | 0x04
+    }
+}
+
+enum Op {
+    Read(usize),
+    Write(usize),
+}
+
+impl Op {
+    fn from(byte: u8) -> Op {
+        const WRITE_MASK: u8 = 0b1000_0000;
+        if byte & WRITE_MASK == WRITE_MASK {
+            Op::Write((byte & !WRITE_MASK) as usize)
+        } else {
+            Op::Read(byte as usize)
+        }
     }
 }
 
