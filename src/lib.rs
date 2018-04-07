@@ -31,7 +31,7 @@ use hal::digital::OutputPin;
 
 impl<E, SPI, NSS> SX1278<SPI, NSS, ()>
 where
-    SPI: spi::Transfer<u8, Error = E>,
+    SPI: spi::Transfer<u8, Error = E> + spi::Write<u8, Error = E>,
     NSS: OutputPin,
 {
     /// Creates a new driver instance and ensures that it is in LoRa RF / SLEEP opmode.

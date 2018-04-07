@@ -36,7 +36,7 @@ impl<E> From<E> for Error<E> {
 
 impl<E, SPI, NSS> SX1278<SPI, NSS, LoRa>
 where
-    SPI: spi::Transfer<u8, Error = E>,
+    SPI: spi::Transfer<u8, Error = E> + spi::Write<u8, Error = E>,
     NSS: OutputPin,
 {
     pub fn new(spi: SPI, nss: NSS) -> Result<Self, E> {
