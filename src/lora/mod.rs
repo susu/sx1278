@@ -148,9 +148,22 @@ where
         Ok(())
     }
 
+    pub fn set_fifo_ptr(&mut self, addr: u8) -> Result<(), E> {
+        self.write(Register::FifoAddrPtr, addr)
+    }
+
+    pub fn transmit_packet(&mut self, packet: &[u8]) -> Result<(), E> {
+        let tx_base_addr = self.read(Register::FifoTxBaseAddr)?;
+        self.set_fifo_ptr(tx_base_addr)?;
+        self.write_burst(Register::Fifo, packet)?;
+        self.write(Register::PayloadLength, packet.len() as u8)?; // TODO check packet length
+        self.set_mode(Mode::Tx)?;
+        Ok(())
+    }
+
     // bus
     fn read(&mut self, reg: Register) -> Result<u8, E> {
-        let mut buffer = [0x00 | reg.addr(), 0];
+        let mut buffer = [SPI_READ | reg.addr(), 0];
         self.nss.set_low();
         let buffer = self.spi.transfer(&mut buffer)?;
         self.nss.set_high();
@@ -158,12 +171,25 @@ where
     }
 
     fn write(&mut self, reg: Register, value: u8) -> Result<(), E> {
-        let mut buffer = [0x80 | reg.addr(), value];
+        let mut buffer = [SPI_WRITE | reg.addr(), value];
         self.nss.set_low();
         self.spi.transfer(&mut buffer)?;
         self.nss.set_high();
         Ok(())
     }
+
+    fn write_burst(&mut self, reg: Register, data: &[u8]) -> Result<(), E> {
+        let write_command = [SPI_WRITE | reg.addr()];
+        self.nss.set_low();
+        self.spi.write(&write_command)?;
+        self.spi.write(&data)?;
+        self.nss.set_high();
+        Ok(())
+    }
 }
+
+
+const SPI_READ: u8 = 0x00;
+const SPI_WRITE: u8 = 0x80;
 
 const MODE_MASK: u8 = 0b0000_0111;
