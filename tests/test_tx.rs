@@ -7,7 +7,7 @@ mod tx {
     use utils::create_sx1278;
 
     #[test]
-    fn poc() {
+    fn test_transmit_packet() {
         let (mut sx, device) = create_sx1278();
 
         let payload = [42u8, 99, 255];
