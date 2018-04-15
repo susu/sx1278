@@ -8,6 +8,9 @@
 
 extern crate embedded_hal as hal;
 
+#[macro_use]
+extern crate bitflags;
+
 use core::marker::PhantomData;
 
 pub enum LoRa {}

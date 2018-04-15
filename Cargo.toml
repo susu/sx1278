@@ -5,6 +5,7 @@ authors = ["Marton Suranyi <marton.suranyi@gmail.com>"]
 
 [dependencies]
 embedded-hal = "0.1.2"
+bitflags = "1.0.1"
 
 [dev-dependencies]
 linux-embedded-hal = "0.1.1"

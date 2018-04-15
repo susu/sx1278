@@ -33,6 +33,19 @@ impl<E> From<E> for Error<E> {
     }
 }
 
+bitflags! {
+    pub struct Irq: u8 {
+        const RX_TIMEOUT          = 0b1000_0000;
+        const RX_DONE             = 0b0100_0000;
+        const PAYLOAD_CRC_ERROR   = 0b0010_0000;
+        const VALID_HEADER        = 0b0001_0000;
+        const TX_DONE             = 0b0000_1000;
+        const CAD_DONE            = 0b0000_0100;
+        const FHSS_CHANGE_CHANNEL = 0b0000_0010;
+        const CAD_DETECTED        = 0b0000_0001;
+    }
+}
+
 
 impl<E, SPI, NSS> SX1278<SPI, NSS, LoRa>
 where
@@ -159,6 +172,11 @@ where
         self.write(Register::PayloadLength, packet.len() as u8)?; // TODO check packet length
         self.set_mode(Mode::Tx)?;
         Ok(())
+    }
+
+    pub fn irq_flags(&mut self) -> Result<Irq, E> {
+        let raw_irq = self.read(Register::IrqFlags)?;
+        Ok(Irq::from_bits(raw_irq).unwrap()) // TODO eliminate unwrap?
     }
 
     // bus
