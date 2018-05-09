@@ -179,6 +179,13 @@ where
         Ok(Irq::from_bits(raw_irq).unwrap()) // TODO eliminate unwrap?
     }
 
+    pub fn begin_receive_single(&mut self) -> Result<(), E> {
+        let rx_base_addr = self.read(Register::FifoRxBaseAddr)?;
+        self.set_fifo_ptr(rx_base_addr)?;
+        self.set_mode(Mode::RxSingle)?;
+        Ok(())
+    }
+
     // bus
     fn read(&mut self, reg: Register) -> Result<u8, E> {
         let mut buffer = [SPI_READ | reg.addr(), 0];

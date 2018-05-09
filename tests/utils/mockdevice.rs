@@ -42,6 +42,10 @@ impl MockDevice {
         self.registry[addr as usize]
     }
 
+    pub fn set_fifo_value(&mut self, addr: u8, value: u8) {
+        self.fifo[addr as usize] = value;
+    }
+
     pub fn process_byte(&mut self, byte: u8) -> u8 {
         assert!(self.chip_selected, "Got data without chip-select! {:x}", byte);
         print!("{:02x} ", byte);
